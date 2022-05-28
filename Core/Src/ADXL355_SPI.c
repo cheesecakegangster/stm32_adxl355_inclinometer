@@ -24,8 +24,9 @@ uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi)
 	HAL_StatusTypeDef status;
 
 	// check if the correct device is connected
-	uint8_t rxdata;
+	uint8_t rxdata = 0;
 	status = ADXL355_ReadRegister(device, ADXL355_DEVID_ID, &rxdata);
+	printf("status = %i", status);
 	errNum += (status != HAL_OK);
 
 	if (rxdata != ADXL355_DEVID_ID_VAL){
