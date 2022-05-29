@@ -26,7 +26,6 @@ uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi)
 	// check if the correct device is connected
 	uint8_t rxdata = 0;
 	status = ADXL355_ReadRegister(device, ADXL355_DEVID_ID, &rxdata);
-	printf("status = %i", status);
 	errNum += (status != HAL_OK);
 
 	if (rxdata != ADXL355_DEVID_ID_VAL){
@@ -52,7 +51,11 @@ uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi)
 
 HAL_StatusTypeDef ADXL355_ReadRegister(ADXL355_type *device, uint8_t txdata, uint8_t *rxdata)
 {
-	return HAL_SPI_TransmitReceive(device->hspi, &txdata, rxdata, 1, SPI_TIMEOUT); //(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size, uint32_t Timeout)
+	// the LSB is a read/write bit (write = 0, read = 1), so must be bit shifted << 1 and add 1 to read
+	uint8_t txdata2 = (txdata << 1) + 1;
+	HAL_SPI_Transmit(device->hspi, &txdata2, 1, SPI_TIMEOUT);
+	return HAL_SPI_Receive(device->hspi, rxdata, 1, SPI_TIMEOUT);
+	//return HAL_SPI_TransmitReceive(device->hspi, &txdata2, rxdata, 1, SPI_TIMEOUT); //(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size, uint32_t Timeout)
 }
 //HAL_StatusTypeDef ADXL355_ReadRegisters(ADXL355_type *device, uint8_t reg, uint8_t *data, uint8_t len)
 //{
