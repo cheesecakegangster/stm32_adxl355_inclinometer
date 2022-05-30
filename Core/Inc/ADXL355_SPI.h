@@ -75,9 +75,9 @@ HAL_StatusTypeDef ADXL355_ReadTemperature(ADXL355_type *device);		// reads the t
 HAL_StatusTypeDef ADXL355_ReadAccelerations(ADXL355_type *device);		// reads all accelerometer registers of the ADXL
 
 // low level functions
-HAL_StatusTypeDef ADXL355_ReadRegister(ADXL355_type *device, uint8_t txdata, uint8_t *rxdata); // read specific register
+HAL_StatusTypeDef ADXL355_SingleByteRead(ADXL355_type *device, uint8_t txdata, uint8_t *rxdata); // read specific register
 HAL_StatusTypeDef ADXL355_MultiByteRead(ADXL355_type *device, uint8_t txdata, uint8_t *rxdata, uint8_t length); // read specific registers and walk through memory starting from the defined register
-HAL_StatusTypeDef ADXL355_WriteRegister(ADXL355_type *device, uint8_t reg, uint8_t *data); // write to specific register
-
+HAL_StatusTypeDef ADXL355_SingleByteWrite(ADXL355_type *device, uint8_t reg, uint8_t txdata); // write to specific register
+HAL_StatusTypeDef ADXL355_MultiByteWrite(ADXL355_type *device, uint8_t reg, uint8_t txdata, uint8_t length);
 
 #endif /* ADXL355_SPI_H */

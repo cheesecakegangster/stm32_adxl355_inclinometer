@@ -67,7 +67,7 @@ uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi, GPIO_TypeDef
 
 // low level functions
 
-HAL_StatusTypeDef ADXL355_ReadRegister(ADXL355_type *device, uint8_t txdata, uint8_t *rxdata)
+HAL_StatusTypeDef ADXL355_SingleByteRead(ADXL355_type *device, uint8_t txdata, uint8_t *rxdata)
 {
 	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, RESET);
 	uint8_t txdata2 = (txdata << 1) + 1;							// the LSB is a read/write bit (write = 0, read = 1), so must be bit shifted << 1 and add 1 to read
@@ -87,11 +87,23 @@ HAL_StatusTypeDef ADXL355_MultiByteRead(ADXL355_type *device, uint8_t txdata, ui
 	return status;
 }
 
-//HAL_StatusTypeDef ADXL355_ReadRegisters(ADXL355_type *device, uint8_t reg, uint8_t *data, uint8_t len)
-//{
-//	//return HAL_SPI_Transmit();
-//}
-//HAL_StatusTypeDef ADXL355_WriteRegister(ADXL355_type *device, uint8_t reg, uint8_t *data)
-//{
-//	//return HAL_SPI_Transmit();
-//}
+HAL_StatusTypeDef ADXL355_SingleByteWrite(ADXL355_type *device, uint8_t reg, uint8_t txdata)
+{
+	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, RESET);
+	uint8_t reg2 = (reg << 1);
+	HAL_StatusTypeDef status = HAL_SPI_Transmit(device->hspi, &reg2, 1, SPI_TIMEOUT);
+	status = HAL_SPI_Transmit(device->hspi, &txdata, 1, SPI_TIMEOUT);
+	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, SET);
+	return status;
+}
+
+
+HAL_StatusTypeDef ADXL355_MultiByteWrite(ADXL355_type *device, uint8_t reg, uint8_t txdata, uint8_t length)
+{
+	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, RESET);
+	uint8_t reg2 = (reg << 1);
+	HAL_StatusTypeDef status = HAL_SPI_Transmit(device->hspi, &reg2, 1, SPI_TIMEOUT);
+	status = HAL_SPI_Transmit(device->hspi, &txdata, length, SPI_TIMEOUT);
+	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, SET);
+	return status;
+}
