@@ -109,9 +109,7 @@ int main(void)
   }
   printf("Requesting data from ADXL355... \n\r");
   uint8_t status;
-  //HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, RESET);
-  status = ADXL355_init(&adxl355, &hspi2);
-  //HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, SET);
+  status = ADXL355_init(&adxl355, &hspi2, GPIOB, GPIO_PIN_12);
   printf("Status: %i\n\r", status);
 
   /* USER CODE END 2 */
@@ -123,7 +121,7 @@ int main(void)
 	HAL_Delay(2000);
 	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);  // PC13 = LED
 	printf("Requesting data from ADXL355... \n\r");
-	status = ADXL355_init(&adxl355, &hspi2);
+	status = ADXL355_init(&adxl355, &hspi2, GPIOB, GPIO_PIN_12);
 	printf("Status: %i\n\r", status);
 
     /* USER CODE END WHILE */

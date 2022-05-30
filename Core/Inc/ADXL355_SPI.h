@@ -63,10 +63,12 @@ typedef struct{
 	float acceleration_y_g;
 	float acceleration_z_g;
 	float temperature_deg_c;
+	GPIO_TypeDef * nss_gpio_port;
+	uint16_t nss_gpio_pin;
 }ADXL355_type;
 
 // initialisation
-uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi);
+uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi, GPIO_TypeDef * nss_gpio_port, uint16_t nss_gpio_pin);
 
 // data acquisition
 HAL_StatusTypeDef ADXL355_ReadTemperature(ADXL355_type *device);		// reads the temperature registers

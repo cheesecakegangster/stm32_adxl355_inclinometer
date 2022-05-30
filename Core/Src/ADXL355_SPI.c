@@ -11,9 +11,11 @@
 
 #define SPI_TIMEOUT 1000
 
-uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi)
+uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi, GPIO_TypeDef * nss_gpio_port, uint16_t nss_gpio_pin)
 {
 	device->hspi				= hspi;
+	device->nss_gpio_port		= nss_gpio_port;
+	device->nss_gpio_pin		= nss_gpio_pin;
 
 	device->acceleration_x_g 	= 0.0f;
 	device->acceleration_y_g 	= 0.0f;
@@ -25,34 +27,21 @@ uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi)
 	HAL_StatusTypeDef status;
 
 	// check if the correct device is connected
-	//uint8_t rxdata = 0;
-	uint8_t rxdata2[3];
-	//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, RESET);
-	status = ADXL355_MultiByteRead(device, ADXL355_DEVID_ID, rxdata2, 3);
-	//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, SET);
-	//status = ADXL355_ReadRegister(device, ADXL355_DEVID_ID, &rxdata);
-	errNum += (status != HAL_OK);
-
-//	for (int i = 0; i < sizeof(rxdata2)/sizeof(rxdata2[0]); i++)
-//	{
-//		printf("%d\n", rxdata2[i]);
-//		printf("lol");
-//	}
+	uint8_t rxdata2[3];														// array to store received data in
+	status = ADXL355_MultiByteRead(device, ADXL355_DEVID_ID, rxdata2, 3);	// perform multibyte read on first 3 registers which contain DEVICE ID, MEMS ID, PART ID
+	errNum += (status != HAL_OK);											// add to error
 
 	if (rxdata2[0] != ADXL355_DEVID_ID_VAL)
 	{
-//		printf("rxdata2[0] = %i", rxdata2[0]);
 		return 255;
 	}
 
 	if (rxdata2[1] != ADXL355_DEVID_MST_VAL)
 	{
-//		printf("rxdata2[1] = %i", rxdata2[1]);
 		return 254;
 	}
 	if (rxdata2[2] != ADXL355_PARTID_VAL)
 	{
-//		printf("rxdata2[2] = %i", rxdata2[2]);
 		return 253;
 	}
 	else
@@ -80,21 +69,21 @@ uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi)
 
 HAL_StatusTypeDef ADXL355_ReadRegister(ADXL355_type *device, uint8_t txdata, uint8_t *rxdata)
 {
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, RESET);
+	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, RESET);
 	uint8_t txdata2 = (txdata << 1) + 1;							// the LSB is a read/write bit (write = 0, read = 1), so must be bit shifted << 1 and add 1 to read
 	HAL_SPI_Transmit(device->hspi, &txdata2, 1, SPI_TIMEOUT);		// HAL_SPI_TransmitReceive doesn't work for some reason (only clocks 8 cycles -> is it because I used length = 1?) -> return HAL_SPI_TransmitReceive(device->hspi, &txdata2, rxdata, 1, SPI_TIMEOUT);
 	HAL_StatusTypeDef status = HAL_SPI_Receive(device->hspi, rxdata, 1, SPI_TIMEOUT);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, SET);
+	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, SET);
 	return status;
 }
 
 HAL_StatusTypeDef ADXL355_MultiByteRead(ADXL355_type *device, uint8_t txdata, uint8_t *rxdata, uint8_t length)
 {
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, RESET);
+	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, RESET);
 	uint8_t txdata2 = (txdata << 1) + 1;
 	HAL_SPI_Transmit(device->hspi, &txdata2, 1, SPI_TIMEOUT);
 	HAL_StatusTypeDef status = HAL_SPI_Receive(device->hspi, rxdata, length, SPI_TIMEOUT); // walks through registers in order from start point "txdata" with specified length in bytes
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, SET);
+	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, SET);
 	return status;
 }
 
