@@ -65,7 +65,7 @@ main-build: Inclinometer.elf secondary-outputs
 
 # Tool invocations
 Inclinometer.elf Inclinometer.map: $(OBJS) $(USER_OBJS) C:\Users\Dusan\Documents\Project\stm32_adxl355_inclinometer.git\STM32F411CEUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Inclinometer.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Dusan\Documents\Project\stm32_adxl355_inclinometer.git\STM32F411CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Inclinometer.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "Inclinometer.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Dusan\Documents\Project\stm32_adxl355_inclinometer.git\STM32F411CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Inclinometer.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

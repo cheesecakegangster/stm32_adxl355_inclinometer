@@ -1,0 +1,1 @@
+ "Project Properties > C/C++ Build > Settings > Tool Settings", or add manually "-u _printf_float" in linker flags
