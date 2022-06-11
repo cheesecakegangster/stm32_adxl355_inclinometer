@@ -53,3 +53,4 @@ dkms.conf
 
 # debug garbage
 *.list
+.settings/org.eclipse.cdt.core.prefs
