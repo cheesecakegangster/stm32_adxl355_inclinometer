@@ -59,6 +59,9 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define spi_nss_Pin GPIO_PIN_12
 #define spi_nss_GPIO_Port GPIOB
+#define DRDY_Pin GPIO_PIN_9
+#define DRDY_GPIO_Port GPIOB
+#define DRDY_EXTI_IRQn EXTI9_5_IRQn
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

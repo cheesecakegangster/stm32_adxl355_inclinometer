@@ -46,12 +46,12 @@ uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi, GPIO_TypeDef
 		return 253;
 	}
 
-	printf("%i\n\r", rxdata[0]);
-	HAL_Delay(1);
-	printf("%i\n\r", rxdata[1]);
-	HAL_Delay(1);
-	printf("%i\n\r", rxdata[2]);
-	HAL_Delay(1);
+	//printf("%i\n\r", rxdata[0]);
+	//HAL_Delay(1);
+	//printf("%i\n\r", rxdata[1]);
+	//HAL_Delay(1);
+	//printf("%i\n\r", rxdata[2]);
+	//HAL_Delay(1);
 
 	status = ADXL355_SingleByteWrite(device, ADXL355_POWER_CTL, 0x00); // enable temperature measurement
 	if (status != HAL_OK){
@@ -59,8 +59,8 @@ uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi, GPIO_TypeDef
 	}
 	uint8_t reg_conf;
 	status = ADXL355_SingleByteRead(device, ADXL355_POWER_CTL, &reg_conf);
-	printf("%i\n\r", reg_conf);
-	HAL_Delay(1);
+	//printf("%i\n\r", reg_conf);
+	//HAL_Delay(1);
 
 	return HAL_OK;
 }
@@ -73,16 +73,16 @@ HAL_StatusTypeDef ADXL355_ReadTemperature(ADXL355_type *device)
 	uint8_t rxdata2[2];
 
 	HAL_StatusTypeDef status = ADXL355_MultiByteRead(device, ADXL355_TEMP2, rxdata2, 2);
-	printf("Transmission status read temp: %i\n\r", status);
-	HAL_Delay(1);
+	//printf("Transmission status read temp: %i\n\r", status);
+	//HAL_Delay(1);
 	if (status != HAL_OK){ // only perform calculation if the transmission was a success
 		return status;
 	}
-	printf("rxdata2[0] contents: %i\n\r",rxdata2[0]);
-	HAL_Delay(1);
+	//printf("rxdata2[0] contents: %i\n\r",rxdata2[0]);
+	//HAL_Delay(1);
 	uint16_t temp_data = (uint16_t)rxdata2[0] << 8 | rxdata2[1];
-	printf("Temp data: %i\n\r", temp_data);
-	HAL_Delay(1);
+	//printf("Temp data: %i\n\r", temp_data);
+	//HAL_Delay(1);
 	device->temperature_deg_c = (float)(25+((temp_data-1852)*(1/-9.05)));
 
 	return status;
@@ -94,25 +94,25 @@ HAL_StatusTypeDef ADXL355_ReadAccelerations(ADXL355_type *device)
 
 	HAL_StatusTypeDef status = ADXL355_MultiByteRead(device, ADXL355_XDATA3, xyz_data, 9);
 	int32_t x_raw = ((int32_t)xyz_data[0] << 24 | (int32_t)xyz_data[1] << 16 | xyz_data[2] << 8) >> 12;
-	printf("x acceleration data raw: %li\n\r", x_raw);
-	HAL_Delay(1);
+	//printf("x acceleration data raw: %li\n\r", x_raw);
+	//HAL_Delay(1);
 	int32_t y_raw = ((int32_t)xyz_data[3] << 24 | (int32_t)xyz_data[4] << 16 | xyz_data[5] << 8) >> 12;
-	printf("y acceleration data raw: %li\n\r", y_raw);
-	HAL_Delay(1);
+	//printf("y acceleration data raw: %li\n\r", y_raw);
+	//HAL_Delay(1);
 	int32_t z_raw = ((int32_t)xyz_data[6] << 24 | (int32_t)xyz_data[7] << 16 | xyz_data[8] << 8) >> 12;
-	printf("z acceleration data raw: %li\n\r", z_raw);
-	HAL_Delay(1);
+	//printf("z acceleration data raw: %li\n\r", z_raw);
+	//HAL_Delay(1);
 
 	device->acceleration_x_g = (4.096f/(pow(2, 20))) * x_raw;
 	device->acceleration_y_g = (4.096f/(pow(2, 20))) * y_raw;
 	device->acceleration_z_g = (4.096f/(pow(2, 20))) * z_raw;
 
-	printf("device x acceleration = %f \n\r", device->acceleration_x_g);
-	HAL_Delay(1);
-	printf("device y acceleration = %f \n\r", device->acceleration_y_g);
-	HAL_Delay(1);
-	printf("device z acceleration = %f \n\r", device->acceleration_z_g);
-	HAL_Delay(1);
+	//printf("device x acceleration = %f \n\r", device->acceleration_x_g);
+	//HAL_Delay(1);
+	//printf("device y acceleration = %f \n\r", device->acceleration_y_g);
+	//HAL_Delay(1);
+	//printf("device z acceleration = %f \n\r", device->acceleration_z_g);
+	//HAL_Delay(1);
 
 	return status;
 }

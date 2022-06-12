@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usb_device.h"
+#include "math.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -49,7 +50,9 @@ DMA_HandleTypeDef hdma_spi2_tx;
 DMA_HandleTypeDef hdma_spi2_rx;
 
 /* USER CODE BEGIN PV */
-
+static volatile int counterr = 0;
+static volatile uint8_t dataready = 0;
+uint8_t usb_inputs_buffer[64];
 
 /* USER CODE END PV */
 
@@ -60,6 +63,7 @@ static void MX_SPI2_Init(void);
 static void MX_DMA_Init(void);
 static void MX_SPI5_Init(void);
 /* USER CODE BEGIN PFP */
+
 
 /* USER CODE END PFP */
 
@@ -102,13 +106,14 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
+
   uint16_t oversamples = 250;
-  uint8_t dataready = 0;
   uint16_t no_of_datareadys = 0;
-  uint32_t x_oversample_buffer[oversamples]; // buffer 1000 reads into an array
-  uint32_t y_oversample_buffer[oversamples];
-  uint32_t z_oversample_buffer[oversamples];
   ADXL355_type adxl355;
+
+  float x_oversample_sum = 0;
+  float y_oversample_sum = 0;
+  float z_oversample_sum = 0;
 
   for(int i = 3; i > 0; i--){
 	  printf("Starting in %i...\n\r", i);
@@ -125,42 +130,70 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	HAL_Delay(1000);
-	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);  // PC13 = LED
-	printf("Requesting data from ADXL355... \n\r");
-	HAL_Delay(1);
+	//HAL_Delay(1000);
+
+	//printf("Requesting data from ADXL355... \n\r");
+	//HAL_Delay(1);
 //	status = ADXL355_init(&adxl355, &hspi2, GPIOB, GPIO_PIN_12);
 //	printf("Status: %i\n\r", status);
 //	printf("\n");
 	status = ADXL355_ReadTemperature(&adxl355);
-	printf("Temperature: %f\n", adxl355.temperature_deg_c);
-	HAL_Delay(1);
-	printf("Status: %i\n\r", status);
-	HAL_Delay(1);
+	//printf("Temperature: %f\n", adxl355.temperature_deg_c);
+	//HAL_Delay(1);
+	//printf("Status: %i\n\r", status);
+	//HAL_Delay(1);
 
 	status = ADXL355_ReadAccelerations(&adxl355);
-	printf("Acceleration x (G): %f\n\r", adxl355.acceleration_x_g);
-	HAL_Delay(1);
-	printf("Acceleration y (G): %f\n\r", adxl355.acceleration_y_g);
-	HAL_Delay(1);
-	printf("Acceleration z (G): %f\n\r", adxl355.acceleration_z_g);
-	HAL_Delay(1);
+	//printf("Acceleration x (G): %f\n\r", adxl355.acceleration_x_g);
+	//HAL_Delay(1);
+	//printf("Acceleration y (G): %f\n\r", adxl355.acceleration_y_g);
+	//HAL_Delay(1);
+	//printf("Acceleration z (G): %f\n\r", adxl355.acceleration_z_g);
+	//HAL_Delay(1);
 
 	if (dataready == 1){
-
-		//x_oversample_buffer[no_of_datareadys] = adxl355.acceleration_x_g;
-		//status = ADXL355_ReadAccelerations(&adxl355);
+		// put acceleration data for all axes in their respective buffers so oversampling can be performed and increment the index for the array
+		status = ADXL355_ReadAccelerations(&adxl355);
+		x_oversample_sum += adxl355.acceleration_x_g;
+		y_oversample_sum += adxl355.acceleration_y_g;
+		z_oversample_sum += adxl355.acceleration_z_g;
 
 		no_of_datareadys += 1;
 
 		if (no_of_datareadys == oversamples){
+			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);  // PC13 = LED
+			//printf("data is ready x250    ");
+			//printf("acc_x = %f    ", adxl355.acceleration_x_g);
+			//printf("acc_x_sum = %f    ", x_oversample_sum);
+			float ax_avg = x_oversample_sum/oversamples;
+			float ay_avg = y_oversample_sum/oversamples;
+			float az_avg = z_oversample_sum/oversamples;
 
+			printf("x_avg = %f  ", ax_avg);
+			printf("y_avg = %f  ", ay_avg);
+			printf("z_avg = %f  ", az_avg);
+
+			//float xz_sum = ax_avg+az_avg;
+			//printf("xz_sum = %f  ", xz_sum);
+			//printf("\n\r");
 
 			no_of_datareadys = 0;
-		}
+			x_oversample_sum = 0;
+			y_oversample_sum = 0;
+			z_oversample_sum = 0;
 
+			float tilt =  180 * ((asinf(ax_avg))/M_PI);
+			printf("tilt: %f deg ", tilt);
+			printf("\n\r");
+
+			//float pitch2 = asinf(ax_avg);
+			//float pitch = 180 * pitch2 / M_PI;
+			//printf("pitch: %f  \n\r", pitch);
+			//printf("roll:   \n\r", roll)
+		}
 		dataready = 0;
 	}
+
 
 
     /* USER CODE END WHILE */
@@ -355,8 +388,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(spi_nss_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB7 PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_9;
+  /*Configure GPIO pins : PB7 DRDY_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_7|DRDY_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -372,6 +405,12 @@ static void MX_GPIO_Init(void)
 int _write(int file, char *ptr, int len) {
 	CDC_Transmit_FS((uint8_t*) ptr, len); return len;
 }
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if (GPIO_Pin == GPIO_PIN_7){
+			dataready = 1;
+		}
+	}
 
 //HAL_StatusTypeDef HAL_SPI_TransmitReceive_DMA(SPI_HandleTypeDef *hspi, uint8_t * pTxData, uint8_t * pRxData, uint16_t Size){
 //	if (hspi == &hspi2)
