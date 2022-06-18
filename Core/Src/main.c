@@ -19,13 +19,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usb_device.h"
-#include "math.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "usbd_cdc_if.h"
 #include "ADXL355_SPI.h"
+#include "math.h"
 
 /* USER CODE END Includes */
 
@@ -46,13 +46,12 @@
 /* Private variables ---------------------------------------------------------*/
  SPI_HandleTypeDef hspi2;
 SPI_HandleTypeDef hspi5;
-DMA_HandleTypeDef hdma_spi2_tx;
-DMA_HandleTypeDef hdma_spi2_rx;
 
 /* USER CODE BEGIN PV */
 static volatile int counterr = 0;
 static volatile uint8_t dataready = 0;
-uint8_t usb_inputs_buffer[64];
+char usb_inputs_buffer[64];
+extern uint8_t char_received;
 
 /* USER CODE END PV */
 
@@ -60,7 +59,6 @@ uint8_t usb_inputs_buffer[64];
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI2_Init(void);
-static void MX_DMA_Init(void);
 static void MX_SPI5_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -101,13 +99,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI2_Init();
-  MX_DMA_Init();
   MX_SPI5_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
-
-  uint16_t oversamples = 250;
+  uint16_t oversamples = 1;
   uint16_t no_of_datareadys = 0;
   ADXL355_type adxl355;
 
@@ -130,6 +126,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+//	  if (char_received == 1){
+//		  CDC_Transmit_FS((uint8_t *)usb_inputs_buffer, strlen(usb_inputs_buffer));
+//		  char_received = 0;
+//	  }
+//	  for (uint8_t j = 0; j < 10; j++){
+//		  printf("%c", usb_inputs_buffer[j]);
+//	  }
+//	  fflush(stdout);
+
+
 	//HAL_Delay(1000);
 
 	//printf("Requesting data from ADXL355... \n\r");
@@ -137,19 +143,20 @@ int main(void)
 //	status = ADXL355_init(&adxl355, &hspi2, GPIOB, GPIO_PIN_12);
 //	printf("Status: %i\n\r", status);
 //	printf("\n");
-	status = ADXL355_ReadTemperature(&adxl355);
-	//printf("Temperature: %f\n", adxl355.temperature_deg_c);
-	//HAL_Delay(1);
-	//printf("Status: %i\n\r", status);
-	//HAL_Delay(1);
+//	status = ADXL355_ReadTemperature(&adxl355);
+//	printf("Temperature: %f\n", adxl355.temperature_deg_c);
+//	HAL_Delay(1);
+//	printf("Status: %i\n\r", status);
+//	HAL_Delay(1);
 
-	status = ADXL355_ReadAccelerations(&adxl355);
+	//status = ADXL355_ReadAccelerations(&adxl355);
 	//printf("Acceleration x (G): %f\n\r", adxl355.acceleration_x_g);
 	//HAL_Delay(1);
 	//printf("Acceleration y (G): %f\n\r", adxl355.acceleration_y_g);
 	//HAL_Delay(1);
 	//printf("Acceleration z (G): %f\n\r", adxl355.acceleration_z_g);
 	//HAL_Delay(1);
+
 
 	if (dataready == 1){
 		// put acceleration data for all axes in their respective buffers so oversampling can be performed and increment the index for the array
@@ -185,6 +192,8 @@ int main(void)
 			float tilt =  180 * ((asinf(ax_avg))/M_PI);
 			printf("tilt: %f deg ", tilt);
 			printf("\n\r");
+
+
 
 			//float pitch2 = asinf(ax_avg);
 			//float pitch = 180 * pitch2 / M_PI;
@@ -271,7 +280,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -321,25 +330,6 @@ static void MX_SPI5_Init(void)
   /* USER CODE BEGIN SPI5_Init 2 */
 
   /* USER CODE END SPI5_Init 2 */
-
-}
-
-/**
-  * Enable DMA controller clock
-  */
-static void MX_DMA_Init(void)
-{
-
-  /* DMA controller clock enable */
-  __HAL_RCC_DMA1_CLK_ENABLE();
-
-  /* DMA interrupt init */
-  /* DMA1_Stream3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
-  /* DMA1_Stream4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
 
 }
 

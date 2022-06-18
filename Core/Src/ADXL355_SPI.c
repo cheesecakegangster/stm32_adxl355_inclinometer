@@ -46,22 +46,46 @@ uint8_t ADXL355_init(ADXL355_type *device, SPI_HandleTypeDef *hspi, GPIO_TypeDef
 		return 253;
 	}
 
-	//printf("%i\n\r", rxdata[0]);
-	//HAL_Delay(1);
-	//printf("%i\n\r", rxdata[1]);
-	//HAL_Delay(1);
-	//printf("%i\n\r", rxdata[2]);
-	//HAL_Delay(1);
+	printf("%i\n\r", rxdata[0]);
+	HAL_Delay(1);
+	printf("%i\n\r", rxdata[1]);
+	HAL_Delay(1);
+	printf("%i\n\r", rxdata[2]);
+	HAL_Delay(1);
+
+	uint8_t reg_conf;
+
+	status = ADXL355_SingleByteRead(device, ADXL355_POWER_CTL, &reg_conf);
+	printf("ADXL355_POWER_CTL contents: %i\n\r", reg_conf); HAL_Delay(1);
+
+
+	status = ADXL355_SingleByteRead(device, ADXL355_FILTER, &reg_conf);
+	printf("Filter settings before configuration: %i\n\r", reg_conf); HAL_Delay(1);
+
+
+	printf("Configuring filter settings...\n\r"); HAL_Delay(1);
+	status = ADXL355_SingleByteWrite(device, ADXL355_FILTER, 0b1010);
+	if (status != HAL_OK){
+			return 251;
+		}
+	HAL_Delay(1);
+
+	status = ADXL355_SingleByteRead(device, ADXL355_FILTER, &reg_conf);
+	printf("Filter settings after configuration: %i\n\r", reg_conf); HAL_Delay(1);
+
+//  multibyte test
+//	uint8_t transmitshit[2] = {0b1010, 0x60};
+//	status = ADXL355_MultiByteWrite(device, ADXL355_FILTER, transmitshit, sizeof(transmitshit)/sizeof(transmitshit[0]));
 
 	status = ADXL355_SingleByteWrite(device, ADXL355_POWER_CTL, 0x00); // enable temperature measurement
+	printf("Writing to POWER_CTL: 0x00\n\r"); HAL_Delay(1);
 	if (status != HAL_OK){
 		return 252;
 	}
-	uint8_t reg_conf;
+	HAL_Delay(1);
 	status = ADXL355_SingleByteRead(device, ADXL355_POWER_CTL, &reg_conf);
-	//printf("%i\n\r", reg_conf);
-	//HAL_Delay(1);
-
+	printf("Power CTL after setting it: %i\n\r", reg_conf); HAL_Delay(1);
+	printf("Init complete\n\r");
 	return HAL_OK;
 }
 
@@ -142,20 +166,21 @@ HAL_StatusTypeDef ADXL355_MultiByteRead(ADXL355_type *device, uint8_t txdata, ui
 HAL_StatusTypeDef ADXL355_SingleByteWrite(ADXL355_type *device, uint8_t reg, uint8_t txdata)
 {
 	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, RESET);
-	uint8_t reg2 = (reg << 1);
-	HAL_StatusTypeDef status = HAL_SPI_Transmit(device->hspi, &reg2, 1+1, SPI_TIMEOUT);
-	status = HAL_SPI_Transmit(device->hspi, &txdata, 1, SPI_TIMEOUT);
+	uint8_t reg2[] = {(reg << 1), txdata}; 							// transmit register and data to write to that register
+	HAL_StatusTypeDef status = HAL_SPI_Transmit(device->hspi, reg2, 1+1, SPI_TIMEOUT);
+	//status = HAL_SPI_Transmit(device->hspi, &txdata, 1, SPI_TIMEOUT);
 	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, SET);
 	return status;
 }
 
 
-HAL_StatusTypeDef ADXL355_MultiByteWrite(ADXL355_type *device, uint8_t reg, uint8_t txdata, uint8_t length)
+HAL_StatusTypeDef ADXL355_MultiByteWrite(ADXL355_type *device, uint8_t reg, uint8_t *txdata, uint8_t length)
 {
 	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, RESET);
 	uint8_t reg2 = (reg << 1);
-	HAL_StatusTypeDef status = HAL_SPI_Transmit(device->hspi, &reg2, length+1, SPI_TIMEOUT);
-	status = HAL_SPI_Transmit(device->hspi, &txdata, length, SPI_TIMEOUT);
+	HAL_StatusTypeDef status = HAL_SPI_Transmit(device->hspi, &reg2, 1, SPI_TIMEOUT); // i dont know what creates more overhead; trying to concatenate an array so it sends everything at once
+	status = HAL_SPI_Transmit(device->hspi, txdata, length, SPI_TIMEOUT);			  // or to transmit twice and miss 24 spi clock cycles (3.67 µs at this frequency)
+	//status = HAL_SPI_Transmit(device->hspi, &txdata, length, SPI_TIMEOUT);
 	HAL_GPIO_WritePin(device->nss_gpio_port, device->nss_gpio_pin, SET);
 	return status;
 }

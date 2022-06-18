@@ -31,7 +31,8 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+uint8_t char_received = 0;
+extern char usb_inputs_buffer[64];
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -263,6 +264,10 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+  //memset(usb_inputs_buffer, '\0', 64);
+  memcpy(usb_inputs_buffer, Buf, (uint8_t)*Len);
+  //memset(Buf, '\0', (uint8_t)*Len);
+  char_received = 1;
   return (USBD_OK);
   /* USER CODE END 6 */
 }
